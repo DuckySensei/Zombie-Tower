@@ -105,6 +105,15 @@ reset.OnClientEvent:Connect(function(player)
 	game.Workspace:WaitForChild(player.Name).Head.ProximityPrompt.Enabled = false
 end)
 
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local normalSwayEffect = 0.1 -- Regular sway effect
+local adsSwayEffect = 0.02 -- Minimal sway effect when ADSing and walking
+local idleSwayEffect = 0.05 -- Little sway when idle
+local runSwayEffect = 0.2 -- Maximum sway effect when running
+
 local firstunADS = true
 local firstADS = false
 local debounce = false
@@ -116,15 +125,20 @@ local function createTween(object, goal, duration)
 	return tween
 end
 
+local function applySway(originalCFrame, swayFactor)
+	local swayX = math.sin(tick() * 5) * swayFactor -- Adjust the multiplier to change the sway speed
+	local swayY = math.sin(tick() * 3) * swayFactor -- Adjust the multiplier to change the sway speed
+	return originalCFrame * CFrame.Angles(swayX, swayY, 0)
+end
+
 RunService.RenderStepped:Connect(function()
 	local camera = workspace.CurrentCamera
 	local rotation = camera.CFrame:ToObjectSpace(lastCameraCFrame)
 	local x, y, z = rotation:ToOrientation()
-	--swayCframe = swayCframe:Lerp(CFrame.Angles(math.sin(x) * swayEffect, math.sin(y) * swayEffect, 0), 0.1)
 	lastCameraCFrame = workspace.CurrentCamera.CFrame
 
 	if _G.ADSing == false then
-		local cameraHeightAdjust = CFrame.new(0, -2.5, 0.5)  -- This creates a CFrame offset that moves the camera up by 3 units
+		local cameraHeightAdjust = CFrame.new(0, -2.5, 0.5) -- This creates a CFrame offset that moves the camera up by 3 units
 		local rotation = CFrame.Angles(0, 0, 0)
 		joelArms.PrimaryPart = joelArms.HumanoidRootPart
 
@@ -141,8 +155,18 @@ RunService.RenderStepped:Connect(function()
 				debounce = false
 				firstunADS = true
 			end)
-		elseif debounce == false then 
-			joelArms:SetPrimaryPartCFrame((camera.CFrame * cameraHeightAdjust * rotation) * swayCframe * CFrame.new(0, -0.25, -1))
+		elseif debounce == false then
+			local goalCFrame
+			if humanoid.MoveDirection.Magnitude > 0 then
+				if humanoid.WalkSpeed > 17 then
+					goalCFrame = applySway(camera.CFrame * cameraHeightAdjust * rotation * swayCframe * CFrame.new(0, -0.25, -1), runSwayEffect)
+				else
+					goalCFrame = applySway(camera.CFrame * cameraHeightAdjust * rotation * swayCframe * CFrame.new(0, -0.25, -1), normalSwayEffect)
+				end
+			else
+				goalCFrame = applySway(camera.CFrame * cameraHeightAdjust * rotation * swayCframe * CFrame.new(0, -0.25, -1), idleSwayEffect)
+			end
+			joelArms:SetPrimaryPartCFrame(goalCFrame)
 		end
 	else
 		local ADS = joelArms:FindFirstChildWhichIsA("Tool"):WaitForChild("ADS")
@@ -162,7 +186,13 @@ RunService.RenderStepped:Connect(function()
 				debounce = false
 			end)
 		elseif debounce == false then
-			joelArms:SetPrimaryPartCFrame(camera.CFrame * CFrame.Angles(0, 0, math.rad(180)))
+			local goalCFrame
+			if humanoid.MoveDirection.Magnitude > 0 then
+				goalCFrame = applySway(camera.CFrame * CFrame.Angles(0, 0, math.rad(180)), adsSwayEffect)
+			else
+				goalCFrame = camera.CFrame * CFrame.Angles(0, 0, math.rad(180))
+			end
+			joelArms:SetPrimaryPartCFrame(goalCFrame)
 		end
 	end
 end)
