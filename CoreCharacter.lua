@@ -34,12 +34,20 @@ RunService.RenderStepped:Connect(function()
 	local x, y, z = rotation:ToOrientation()
 	swayCframe = swayCframe:Lerp(CFrame.Angles(math.sin(x) * swayEffect, math.sin(y) * swayEffect, 0), 0.1)
 	lastCameraCFrame = workspace.CurrentCamera.CFrame
+	
+	if _G.ADSing == false then
+		-- Adjust camera position: Raise the camera by 3 studs
+		local cameraHeightAdjust = CFrame.new(0, -2.5, 0.5)  -- This creates a CFrame offset that moves the camera up by 3 units
 
-	-- Adjust camera position: Raise the camera by 3 studs
-	local cameraHeightAdjust = CFrame.new(0, -2.5, 0.5)  -- This creates a CFrame offset that moves the camera up by 3 units
-
-	-- Apply the adjusted camera CFrame to the joelArms
-	joelArms:SetPrimaryPartCFrame((camera.CFrame * cameraHeightAdjust) * swayCframe * CFrame.new(0, -0.25, -1))
+		-- Apply the adjusted camera CFrame to the joelArms
+		joelArms:SetPrimaryPartCFrame((camera.CFrame * cameraHeightAdjust) * swayCframe * CFrame.new(0, -0.25, -1))
+	else
+		local ADS = joelArms:FindFirstChildWhichIsA("Tool"):WaitForChild("ADS")
+		joelArms.PrimaryPart = ADS
+		
+		local rotation = CFrame.Angles(0, 0, math.rad(180))
+		joelArms:SetPrimaryPartCFrame(camera.CFrame * rotation)
+	end
 end)
 
 local player = game.Players.LocalPlayer
@@ -58,11 +66,11 @@ local function enableProximityPrompt(player)
 	if not character then
 		return -- Exit if the character is nil
 	end
-	
+
 	local character = player.Character 
 	if game.Players.LocalPlayer.Character.Humanoid.HP.Value <= 0 then
 		local peeps = game:GetService("Players")
-		
+
 		for i, peeps in ipairs(peeps:GetPlayers()) do
 			local health = peeps.Character.Humanoid.HP.Value
 			if health < 0 then
