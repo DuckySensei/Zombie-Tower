@@ -38,9 +38,11 @@ RunService.RenderStepped:Connect(function()
 	if _G.ADSing == false then
 		-- Adjust camera position: Raise the camera by 3 studs
 		local cameraHeightAdjust = CFrame.new(0, -2.5, 0.5)  -- This creates a CFrame offset that moves the camera up by 3 units
+		local rotation = CFrame.Angles(0, 0, 0)
+		joelArms.PrimaryPart = joelArms.HumanoidRootPart
 
 		-- Apply the adjusted camera CFrame to the joelArms
-		joelArms:SetPrimaryPartCFrame((camera.CFrame * cameraHeightAdjust) * swayCframe * CFrame.new(0, -0.25, -1))
+		joelArms:SetPrimaryPartCFrame((camera.CFrame * cameraHeightAdjust * rotation) * swayCframe * CFrame.new(0, -0.25, -1))
 	else
 		local ADS = joelArms:FindFirstChildWhichIsA("Tool"):WaitForChild("ADS")
 		joelArms.PrimaryPart = ADS
