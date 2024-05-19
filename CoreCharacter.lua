@@ -3,11 +3,12 @@ local Players = game:GetService("Players")
 local teleportService = game:GetService("TeleportService")
 local events = game:GetService("ReplicatedStorage").Events
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local revive = events.ReviveEvent
 local reset = events.ResetCharacter
 
 
-wait(1)
+--wait(1)
 
 local hand = game:WaitForChild("ReplicatedStorage").CharacterArms
 
@@ -118,6 +119,7 @@ local firstunADS = true
 local firstADS = false
 local debounce = false
 local lastCameraCFrame = workspace.CurrentCamera.CFrame
+local currentGun = nil
 
 local function createTween(object, goal, duration)
 	local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
@@ -133,6 +135,27 @@ end
 
 RunService.RenderStepped:Connect(function()
 	local camera = workspace.CurrentCamera
+	if _G.Unequipping == true then
+		local camera = workspace.CurrentCamera
+		local rotation = camera.CFrame:ToObjectSpace(lastCameraCFrame)
+		local x, y, z = rotation:ToOrientation()
+		lastCameraCFrame = workspace.CurrentCamera.CFrame
+		local cameraHeightAdjust = CFrame.new(0, -2.5, 0.5) -- This creates a CFrame offset that moves the camera up by 3 units
+		local rotation = CFrame.Angles(0, 0, 0)
+		local swayCframe = CFrame.Angles(x, y, z)
+		joelArms.PrimaryPart = joelArms.HumanoidRootPart
+		_G.Unequipping = false
+		return
+	end
+	
+	if _G.Equipping == true then
+		debounce = true
+		local goalCFrame = applySway(camera.CFrame * CFrame.new(0, -2.5, 0.5) * CFrame.Angles(0, 90, 90) * swayCframe * CFrame.new(0, -0.25, -1), idleSwayEffect)
+		joelArms:SetPrimaryPartCFrame(goalCFrame)
+		_G.Unequipping = false
+		return
+	end
+	
 	local rotation = camera.CFrame:ToObjectSpace(lastCameraCFrame)
 	local x, y, z = rotation:ToOrientation()
 	lastCameraCFrame = workspace.CurrentCamera.CFrame
@@ -176,21 +199,21 @@ RunService.RenderStepped:Connect(function()
 			debounce = true
 			firstunADS = false
 
-			local goalCFrame = camera.CFrame * CFrame.Angles(0, 0, math.rad(180))
+			local goalCFrame = camera.CFrame * CFrame.Angles(0, 0, 0)
 			local tween = createTween(joelArms, goalCFrame, 0.065) -- Adjust the duration as needed
 			tween:Play()
 
 			tween.Completed:Connect(function()
-				joelArms:SetPrimaryPartCFrame(camera.CFrame * CFrame.Angles(0, 0, math.rad(180)))
+				joelArms:SetPrimaryPartCFrame(camera.CFrame * CFrame.Angles(0, 0, 0))
 				firstADS = true
 				debounce = false
 			end)
 		elseif debounce == false then
 			local goalCFrame
 			if humanoid.MoveDirection.Magnitude > 0 then
-				goalCFrame = applySway(camera.CFrame * CFrame.Angles(0, 0, math.rad(180)), adsSwayEffect)
+				goalCFrame = applySway(camera.CFrame * CFrame.Angles(0, 0, 0), adsSwayEffect)
 			else
-				goalCFrame = camera.CFrame * CFrame.Angles(0, 0, math.rad(180))
+				goalCFrame = camera.CFrame * CFrame.Angles(0, 0, 0)
 			end
 			joelArms:SetPrimaryPartCFrame(goalCFrame)
 		end
